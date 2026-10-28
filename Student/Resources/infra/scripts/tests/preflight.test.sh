@@ -49,7 +49,12 @@ case "$name" in
         printf '{"id":"test-sub","tenantId":"test-tenant","state":"%s"}\n' "$state" ;;
       "provider show "*)
         [[ "${MOCK_CASE:-}" != denied ]] || exit 1
-        if [[ "${MOCK_CASE:-}" == provider ]]; then echo NotRegistered; else echo Registered; fi ;;
+        case "${MOCK_CASE:-}" in
+          provider) echo NotRegistered ;;
+          providercrlf) printf 'Registered\r\n' ;;
+          unregisteredcrlf) printf 'NotRegistered\r\n' ;;
+          *) echo Registered ;;
+        esac ;;
       "network watcher list "*)
         [[ "${MOCK_CASE:-}" != denied ]] || exit 1
         if [[ "${MOCK_CASE:-}" == watcher ]]; then echo '[]'
@@ -117,6 +122,9 @@ MOCK_CASE=disabled check 'disabled subscription' 1 'not Enabled'
 ARM_SUBSCRIPTION_ID=other check 'subscription mismatch' 1 'ARM_SUBSCRIPTION_ID differs'
 ARM_TENANT_ID=other check 'tenant mismatch' 1 'ARM_TENANT_ID differs'
 MOCK_CASE=provider check 'provider registration' 1 'not Registered'
+MOCK_CASE=providercrlf check 'registered providers with CRLF' 0 '0 failure(s)'
+MOCK_CASE=providercrlf check 'DBA registered providers with CRLF' 0 '0 failure(s)' --track sql-dba
+MOCK_CASE=unregisteredcrlf check 'unregistered providers with CRLF' 1 'actual: NotRegistered)'
 MOCK_CASE=watcher check 'missing watcher' 1 'Missing NetworkWatcher'
 MOCK_CASE=wrongwatcherrg check 'watcher in wrong resource group' 1 'Missing NetworkWatcher'
 MOCK_CASE=denied check 'unverifiable Azure checks' 0 'Cannot inspect'

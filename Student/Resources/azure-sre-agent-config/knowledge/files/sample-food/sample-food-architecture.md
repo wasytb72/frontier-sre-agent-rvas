@@ -22,9 +22,46 @@ The Sample Food Ordering App lab is an optional application workload integrated 
 - Azure Container Apps emits platform, console, and HTTP logs to Log Analytics when diagnostic settings are enabled.
 - Application Insights is available for application telemetry when the app emits it.
 
+## Reversible Lab Outage
+
+From `Student/`, run `make break-food` to inject an ingress routing fault, and
+`make restore-food` to recover. These commands require Azure CLI write access
+to the lab API Container App's ingress and resource tags. Use only in an isolated
+lab; the fault intentionally makes the public API unavailable.
+
+The script saves the current ingress target port in the Container App tag
+`rvas-food-original-target-port`, then changes it to port `1`, where the lab API
+does not listen. It verifies HTTP 5xx on both `/WeatherForecast` and
+`/api/FoodItems` for three consecutive probes. DNS errors, connection failures,
+and timeouts are not counted as successful fault injection. Verification is
+bounded to 24 attempts (up to two 10-second requests per attempt, with five
+seconds between attempts); it exits nonzero if the expected state is not observed.
+
+Recovery restores the saved port, verifies three consecutive HTTP 2xx responses
+on both routes, then removes the recovery tag. Do not remove the tag before
+recovery. If an update or verification fails, the saved state is retained so
+`make restore-food` can be retried. A second injection is refused until recovery.
+Avoid concurrent scenario runs or ingress edits during the exercise.
+
+The script can also be run directly:
+
+```bash
+bash Resources/scenarios/scripts/break-sample-food-app.sh break --yes
+bash Resources/scenarios/scripts/break-sample-food-app.sh restore --yes
+```
+
+These replace the former URL/request-count/sleep arguments.
+
+This scenario intentionally creates temporary Terraform configuration drift.
+Restore it before applying Terraform again. It does not modify the API image,
+application source, or memory limits. Unlike the former cart-load loop, it is
+an ingress outage, **not an OOM or application memory-leak incident**. Investigate
+the ingress target port and Azure Activity Log; application request telemetry may
+be absent because the requests never reach the application. Restarting a revision
+does not fix this fault.
+
 ## Important Boundary
 
 Azure Container Apps workload traffic is not supported by Azure Virtual Network Flow Logs. Use Container Apps logs and Application Insights for application incident analysis. Use `NTANetAnalytics` for the existing VM/network lab and any explicitly deployed supported probe workload.
 
 Official source: https://learn.microsoft.com/en-us/azure/network-watcher/vnet-flow-logs-overview#incompatible-services
-

@@ -101,8 +101,9 @@ providers=(Microsoft.App Microsoft.Network Microsoft.Compute Microsoft.Operation
 if [[ "$track" == sql-dba ]]; then providers=(Microsoft.App Microsoft.Sql Microsoft.ContainerRegistry Microsoft.ManagedIdentity Microsoft.OperationalInsights); fi
 for provider in "${providers[@]}"; do
   if state="$(az provider show --namespace "$provider" --query registrationState --output tsv 2>/dev/null)"; then
+    state="${state%$'\r'}"
     if [[ "$state" == Registered ]]; then pass "$provider is registered"
-    else fail "$provider is not Registered. Ask the subscription administrator to register it before deployment."; fi
+    else fail "$provider is not Registered (actual: $state). Ask the subscription administrator to register it before deployment."; fi
   else warn "Cannot inspect $provider. Ask your coach to verify registration."; fi
 done
 

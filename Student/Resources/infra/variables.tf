@@ -7,7 +7,7 @@ variable "location" {
 variable "resource_group_name" {
   description = "Name of the single shared resource group used by every workload resource."
   type        = string
-  default     = "rg-sre-agent-rvas"
+  default     = "rg-sre-agent-demo"
 }
 
 variable "vm_admin_username" {

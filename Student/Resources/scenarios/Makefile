@@ -2,7 +2,7 @@ SCENARIOS  ?=scripts
 
 .PHONY: validate validate-food validate-parking \
 		baseline-traffic food-traffic parking-traffic \
-		break-food food-status \
+		break-food restore-food food-status \
         trigger-nginx-down restore-nginx \
         trigger-nsg-block restore-nsg-block \
         trigger-udr restore-udr \
@@ -39,9 +39,13 @@ food-traffic:
 parking-traffic:
 	@bash $(SCENARIOS)/generate-parking-manager-traffic.sh
 
-## break-food: inject HTTP 5xx fault into Grubify (Challenges 06, 14, 15)
+## break-food: inject and verify a reversible Grubify ingress HTTP 5xx fault
 break-food:
-	$(SCENARIOS)/break-sample-food-app.sh
+	bash $(SCENARIOS)/break-sample-food-app.sh break --yes
+
+## restore-food: restore Grubify's saved ingress target port and verify recovery
+restore-food:
+	bash $(SCENARIOS)/break-sample-food-app.sh restore --yes
 
 ## food-status: check Grubify container image deployment status (Challenges 06, 14)
 food-status:
