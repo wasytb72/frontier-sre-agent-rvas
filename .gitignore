@@ -386,3 +386,4 @@ _site
 
 # rvas-sre-agent-jumpstart skill
 .rvas-sre-agent-jumpstart/
+.fake
